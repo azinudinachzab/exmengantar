@@ -48,7 +48,10 @@ export function ProfileCard({ profile, index }: { profile: Profile; index: numbe
         )}
       </div>
 
-      <p className="text-sm text-ink-soft leading-relaxed line-clamp-3">
+      <p
+        tabIndex={0}
+        className="text-sm text-ink-soft leading-relaxed line-clamp-3 cursor-help hover:line-clamp-none focus:line-clamp-none focus:outline-none"
+      >
         {profile.bio}
       </p>
 
