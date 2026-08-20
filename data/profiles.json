@@ -1,0 +1,32 @@
+[
+  {
+    "id": "1",
+    "name": "Azinudin Achzab",
+    "title": "Senior Fullstack Engineer",
+    "previousCompany": [
+      "SPE Solution",
+      "Virgo",
+      "TN Inc Ltd"
+    ],
+    "location": "Jakarta, Indonesia",
+    "bio": "7++ years of sotware engineering experience, with a focus on building scalable web applications and APIs.",
+    "skills": [
+      "Go",
+      "NodeJS",
+      "Vue",
+      "React",
+      "SQL",
+      "Docker"
+    ],
+    "openToRoles": [
+      "Full-time"
+    ],
+    "layoffDate": "2026-09-25",
+    "email": "hello.azinudinachzab@gmail.com",
+    "linkedin": "https://www.linkedin.com/in/azinudin-achzab-a2745613a/",
+    "portfolio": "https://azinudinachzab.github.io/portofolio/portfolio.pdf",
+    "photoUrl": "https://drive.google.com/file/d/1_9nGYQ3u8tqIwe2YxhuwfjAxVLNssX4a/view?usp=sharing",
+    "createdAt": "2026-08-01T09:00:00.000Z",
+    "updatedAt": "2026-08-01T09:00:00.000Z"
+  }
+]

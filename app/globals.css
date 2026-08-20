@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f7f5f0;
+  --paper-raised: #ffffff;
+  --ink: #14181f;
+  --ink-soft: #4a5160;
+  --line: #dcd6c9;
+  --signal: #2f7a4f;      /* "open to work" status green */
+  --signal-soft: #e4efe7;
+  --gold: #b8860b;        /* accent for tags/highlights */
+  --gold-soft: #f3ead0;
+  --danger: #a3402f;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-signal: var(--signal);
+  --color-signal-soft: var(--signal-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-danger: var(--danger);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-plex-mono);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .status-dot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: var(--signal);
+    animation: pulse-ring 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.roster-number {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
