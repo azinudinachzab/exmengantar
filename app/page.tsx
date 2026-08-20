@@ -2,6 +2,10 @@ import { getProfiles } from "@/lib/db";
 import { SiteHeader } from "@/components/SiteHeader";
 import { RosterBoard } from "@/components/RosterBoard";
 
+// Data lives in Redis and changes via the dashboard, so always fetch fresh
+// rather than prerendering a stale roster at build time.
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const profiles = await getProfiles();
 

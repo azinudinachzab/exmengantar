@@ -3,6 +3,8 @@ import { getProfiles } from "@/lib/db";
 import { SiteHeader } from "@/components/SiteHeader";
 import { DashboardTable } from "@/components/DashboardTable";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const profiles = await getProfiles();
 

@@ -1,41 +1,52 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { createClient, RedisClientType } from 'redis';
 import { Profile, ProfileInput } from "./types";
 
-// NOTE: This uses a local JSON file as a lightweight "database". It's great
-// for local development and small deployments (e.g. a single persistent
-// server or a VM). On serverless platforms with an ephemeral/read-only
-// filesystem (e.g. default Vercel deployments) writes will NOT persist
-// across requests. Swap this file for a real database (Postgres, SQLite via
-// Turso, Supabase, etc.) before going to production. The function
-// signatures below are written so that swap is a drop-in replacement.
+// Data layer backed by Redis Cloud (via node-redis), reached through
+// REDIS_URL. Works on Vercel's read-only serverless filesystem, unlike a
+// local JSON file. Function signatures match the previous versions, so
+// nothing outside this module had to change.
+//
+// Data shape:
+//   profile:<id>   -> JSON string of a Profile
+//   profiles:index -> sorted set, score = createdAt (ms), member = id
+//                      (lets us list newest-first without a full table scan)
 
-const DATA_FILE = path.join(process.cwd(), "data", "profiles.json");
+let client: RedisClientType | null = null;
 
-async function readAll(): Promise<Profile[]> {
-  const raw = await fs.readFile(DATA_FILE, "utf-8");
-  return JSON.parse(raw) as Profile[];
+// Cache the connection across invocations instead of reconnecting (and
+// leaking connections) on every request.
+async function getClient(): Promise<RedisClientType> {
+  if (client) return client;
+  client = createClient({ url: process.env.REDIS_URL }) as RedisClientType;
+  client.on("error", (err) => console.error("Redis Client Error", err));
+  await client.connect();
+  return client;
 }
 
-async function writeAll(profiles: Profile[]): Promise<void> {
-  await fs.writeFile(DATA_FILE, JSON.stringify(profiles, null, 2), "utf-8");
-}
+const PROFILE_KEY = (id: string) => `profile:${id}`;
+const INDEX_KEY = "profiles:index";
 
 export async function getProfiles(): Promise<Profile[]> {
-  const profiles = await readAll();
+  const redis = await getClient();
+
   // newest first
-  return profiles.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  const ids = await redis.zRange(INDEX_KEY, 0, -1, { REV: true });
+  if (ids.length === 0) return [];
+
+  const raw = await Promise.all(ids.map((id) => redis.get(PROFILE_KEY(id))));
+  return raw
+    .filter((r): r is string => r !== null)
+    .map((r) => JSON.parse(r) as Profile);
 }
 
 export async function getProfile(id: string): Promise<Profile | undefined> {
-  const profiles = await readAll();
-  return profiles.find((p) => p.id === id);
+  const redis = await getClient();
+  const raw = await redis.get(PROFILE_KEY(id));
+  return raw ? (JSON.parse(raw) as Profile) : undefined;
 }
 
 export async function createProfile(input: ProfileInput): Promise<Profile> {
-  const profiles = await readAll();
+  const redis = await getClient();
   const now = new Date().toISOString();
   const newProfile: Profile = {
     ...input,
@@ -43,8 +54,10 @@ export async function createProfile(input: ProfileInput): Promise<Profile> {
     createdAt: now,
     updatedAt: now,
   };
-  profiles.push(newProfile);
-  await writeAll(profiles);
+
+  await redis.set(PROFILE_KEY(newProfile.id), JSON.stringify(newProfile));
+  await redis.zAdd(INDEX_KEY, { score: Date.now(), value: newProfile.id });
+
   return newProfile;
 }
 
@@ -52,22 +65,26 @@ export async function updateProfile(
   id: string,
   input: Partial<ProfileInput>
 ): Promise<Profile | undefined> {
-  const profiles = await readAll();
-  const idx = profiles.findIndex((p) => p.id === id);
-  if (idx === -1) return undefined;
-  profiles[idx] = {
-    ...profiles[idx],
+  const redis = await getClient();
+  const raw = await redis.get(PROFILE_KEY(id));
+  if (!raw) return undefined;
+
+  const existing = JSON.parse(raw) as Profile;
+  const updated: Profile = {
+    ...existing,
     ...input,
     updatedAt: new Date().toISOString(),
   };
-  await writeAll(profiles);
-  return profiles[idx];
+
+  await redis.set(PROFILE_KEY(id), JSON.stringify(updated));
+  return updated;
 }
 
 export async function deleteProfile(id: string): Promise<boolean> {
-  const profiles = await readAll();
-  const next = profiles.filter((p) => p.id !== id);
-  if (next.length === profiles.length) return false;
-  await writeAll(next);
+  const redis = await getClient();
+  const deletedCount = await redis.del(PROFILE_KEY(id));
+  if (deletedCount === 0) return false;
+
+  await redis.zRem(INDEX_KEY, id);
   return true;
 }
