@@ -1,12 +1,34 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Profile } from "@/lib/types";
 import { ProfileCard } from "./ProfileCard";
 
 export function RosterBoard({ profiles }: { profiles: Profile[] }) {
   const [query, setQuery] = useState("");
   const [skillFilter, setSkillFilter] = useState<string>("All");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isEditable =
+        target?.isContentEditable ||
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.tagName === "SELECT";
+
+      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey || isEditable) {
+        return;
+      }
+
+      event.preventDefault();
+      searchInputRef.current?.focus();
+    };
+
+    document.addEventListener("keydown", focusSearch);
+    return () => document.removeEventListener("keydown", focusSearch);
+  }, []);
 
   const allSkills = useMemo(() => {
     const set = new Set<string>();
@@ -32,6 +54,7 @@ export function RosterBoard({ profiles }: { profiles: Profile[] }) {
     <div>
       <div className="flex flex-col sm:flex-row gap-3 mb-8">
         <input
+          ref={searchInputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
