@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Profile } from "@/lib/types";
 import { ProfileCard } from "./ProfileCard";
+import { TitleFilter } from "./TitleFilter";
 
 export function RosterBoard({ profiles }: { profiles: Profile[] }) {
   const [query, setQuery] = useState("");
   const [skillFilter, setSkillFilter] = useState<string>("All");
+  const [titleFilter, setTitleFilter] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -18,7 +20,13 @@ export function RosterBoard({ profiles }: { profiles: Profile[] }) {
         target?.tagName === "TEXTAREA" ||
         target?.tagName === "SELECT";
 
-      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey || isEditable) {
+      if (
+        event.key !== "/" ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        isEditable
+      ) {
         return;
       }
 
@@ -36,6 +44,12 @@ export function RosterBoard({ profiles }: { profiles: Profile[] }) {
     return ["All", ...Array.from(set).sort()];
   }, [profiles]);
 
+  const allTitles = useMemo(() => {
+    const set = new Set<string>();
+    profiles.forEach((p) => set.add(p.title));
+    return Array.from(set).sort();
+  }, [profiles]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return profiles.filter((p) => {
@@ -45,10 +59,13 @@ export function RosterBoard({ profiles }: { profiles: Profile[] }) {
         p.title.toLowerCase().includes(q) ||
         p.previousCompany.some((s) => s.toLowerCase().includes(q)) ||
         p.skills.some((s) => s.toLowerCase().includes(q));
-      const matchesSkill = skillFilter === "All" || p.skills.includes(skillFilter);
-      return matchesQuery && matchesSkill;
+      const matchesSkill =
+        skillFilter === "All" || p.skills.includes(skillFilter);
+      const matchesTitle =
+        titleFilter.length === 0 || titleFilter.includes(p.title);
+      return matchesQuery && matchesSkill && matchesTitle;
     });
-  }, [profiles, query, skillFilter]);
+  }, [profiles, query, skillFilter, titleFilter]);
 
   return (
     <div>
@@ -60,6 +77,11 @@ export function RosterBoard({ profiles }: { profiles: Profile[] }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by name, title, company, or skill…"
           className="flex-1 rounded-sm border border-line bg-paper-raised px-4 py-2.5 text-sm placeholder:text-ink-soft/60 focus:outline-none focus:ring-2 focus:ring-signal/40"
+        />
+        <TitleFilter
+          titles={allTitles}
+          selected={titleFilter}
+          onChange={setTitleFilter}
         />
         <select
           value={skillFilter}
@@ -76,7 +98,9 @@ export function RosterBoard({ profiles }: { profiles: Profile[] }) {
 
       {filtered.length === 0 ? (
         <div className="rounded-sm border border-dashed border-line py-16 text-center">
-          <p className="font-display text-lg text-ink">No one matches that search.</p>
+          <p className="font-display text-lg text-ink">
+            No one matches that search.
+          </p>
           <p className="text-sm text-ink-soft mt-1">
             Try a different name, skill, or clear the filters.
           </p>
