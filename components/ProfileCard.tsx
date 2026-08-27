@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Profile } from "@/lib/types";
+import { SkillsDisplay } from "./SkillsDisplay";
 
 function initials(name: string) {
   return name
@@ -77,16 +78,11 @@ export function ProfileCard({ profile, index }: { profile: Profile; index: numbe
       </div>
 
       {profile.skills.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {profile.skills.slice(0, 6).map((skill) => (
-            <span
-              key={skill}
-              className="rounded-full border border-gold/40 bg-gold-soft px-2.5 py-0.5 text-[11px] text-ink"
-            >
-              {skill}
-            </span>
-          ))}
-        </div>
+        <SkillsDisplay 
+          skills={profile.skills}
+          maxVisible={6}
+          showMoreLabel="show more"
+        />
       )}
 
       <div className="mt-auto pt-3 border-t border-line flex items-center gap-4 text-sm">

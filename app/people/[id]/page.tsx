@@ -5,6 +5,7 @@ import { getProfile } from "@/lib/db";
 import { SITE_URL } from "@/lib/site";
 import { Profile } from "@/lib/types";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SkillsDisplay } from "@/components/SkillsDisplay";
 
 // Redis is the source of truth and the dashboard mutates it anytime, so
 // always render fresh — consistent with the roster homepage.
@@ -196,15 +197,12 @@ export default async function ProfilePage({ params }: PeoplePageProps) {
             )}
 
             {profile.skills.length > 0 && (
-              <div className="mt-6 flex flex-wrap gap-1.5">
-                {profile.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded-full border border-gold/40 bg-gold-soft px-2.5 py-0.5 text-[11px] text-ink"
-                  >
-                    {skill}
-                  </span>
-                ))}
+              <div className="mt-6">
+                <SkillsDisplay 
+                  skills={profile.skills}
+                  maxVisible={6}
+                  showMoreLabel="show more"
+                />
               </div>
             )}
 
