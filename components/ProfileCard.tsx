@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Profile } from "@/lib/types";
 
 function initials(name: string) {
@@ -26,7 +27,12 @@ export function ProfileCard({ profile, index }: { profile: Profile; index: numbe
           </div>
           <div>
             <h3 className="font-display text-xl leading-tight text-ink">
-              {profile.name}
+              <Link
+                href={`/people/${profile.id}`}
+                className="hover:text-gold transition-colors"
+              >
+                {profile.name}
+              </Link>
             </h3>
             <p className="text-sm text-ink-soft leading-snug">{profile.title}</p>
           </div>
