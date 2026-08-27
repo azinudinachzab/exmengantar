@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Profile } from "@/lib/types";
 import { ProfileCard } from "./ProfileCard";
-import { TitleFilter } from "./TitleFilter";
+import { MultiSelectFilter } from "./MultiSelectFilter";
 
 export function RosterBoard({ profiles }: { profiles: Profile[] }) {
   const [query, setQuery] = useState("");
-  const [skillFilter, setSkillFilter] = useState<string>("All");
+  const [skillFilter, setSkillFilter] = useState<string[]>([]);
   const [titleFilter, setTitleFilter] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,7 +41,7 @@ export function RosterBoard({ profiles }: { profiles: Profile[] }) {
   const allSkills = useMemo(() => {
     const set = new Set<string>();
     profiles.forEach((p) => p.skills.forEach((s) => set.add(s)));
-    return ["All", ...Array.from(set).sort()];
+    return Array.from(set).sort();
   }, [profiles]);
 
   const allTitles = useMemo(() => {
@@ -60,7 +60,7 @@ export function RosterBoard({ profiles }: { profiles: Profile[] }) {
         p.previousCompany.some((s) => s.toLowerCase().includes(q)) ||
         p.skills.some((s) => s.toLowerCase().includes(q));
       const matchesSkill =
-        skillFilter === "All" || p.skills.includes(skillFilter);
+        skillFilter.length === 0 || skillFilter.some((s) => p.skills.includes(s));
       const matchesTitle =
         titleFilter.length === 0 || titleFilter.includes(p.title);
       return matchesQuery && matchesSkill && matchesTitle;
@@ -69,7 +69,7 @@ export function RosterBoard({ profiles }: { profiles: Profile[] }) {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row gap-3 mb-8">
+      <div className="flex flex-col gap-3 mb-8 sm:flex-row sm:flex-wrap">
         <input
           ref={searchInputRef}
           type="text"
@@ -78,22 +78,21 @@ export function RosterBoard({ profiles }: { profiles: Profile[] }) {
           placeholder="Search by name, title, company, or skill…"
           className="flex-1 rounded-sm border border-line bg-paper-raised px-4 py-2.5 text-sm placeholder:text-ink-soft/60 focus:outline-none focus:ring-2 focus:ring-signal/40"
         />
-        <TitleFilter
-          titles={allTitles}
+        <MultiSelectFilter
+          label="All titles"
+          options={allTitles}
           selected={titleFilter}
           onChange={setTitleFilter}
+          allLabel="All titles"
         />
-        <select
-          value={skillFilter}
-          onChange={(e) => setSkillFilter(e.target.value)}
-          className="rounded-sm border border-line bg-paper-raised px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-signal/40"
-        >
-          {allSkills.map((skill) => (
-            <option key={skill} value={skill}>
-              {skill === "All" ? "All skills" : skill}
-            </option>
-          ))}
-        </select>
+        <MultiSelectFilter
+          label="All skills"
+          options={allSkills}
+          selected={skillFilter}
+          onChange={setSkillFilter}
+          allLabel="All skills"
+          searchable
+        />
       </div>
 
       {filtered.length === 0 ? (
